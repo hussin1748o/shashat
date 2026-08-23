@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر رقمي للهواتف - إدارة الشاشات</title>
+    <!-- استدعاء مكتبة الأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #081c15; 
+            --card-color: #1b4332; 
+            --primary: #2d6a4f; 
+            --accent: #40916c; 
+            --text-color: #d8f3dc; 
+            --danger: #e63946; 
+            --warning: #ffb703;
+            --success: #2a9d8f;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .header-title {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+
+        .stats {
+            text-align: center;
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-size: 14px;
+            background: #081c15;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .controls-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+            background-color: #f8f9fa;
+            font-family: inherit;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        button {
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn-add-new {
+            background-color: var(--primary);
+            padding: 0 20px;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-new:hover { background-color: var(--accent); }
+
+        /* نموذج الإضافة */
+        .add-form {
+            display: none;
+            background-color: var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .add-form.active { display: grid; }
+        
+        .add-form input, .add-form select { width: 100%; box-sizing: border-box; }
+        .form-full-width { grid-column: span 2; }
+        
+        .btn-submit {
+            background-color: #1b4332;
+            padding: 12px;
+            font-size: 16px;
+            grid-column: span 2;
+            font-weight: bold;
+        }
+        .btn-submit:hover { background-color: #081c15; }
+
+        /* شبكة الشاشات */
+        .screens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .screen-card {
+            background-color: var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            position: relative;
+            border-right: 5px solid var(--accent);
+        }
+
+        .screen-card.out-of-stock { border-right-color: var(--danger); opacity: 0.8; }
+        .screen-card.low-stock { border-right-color: var(--warning); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .brand-badge {
+            background-color: rgba(0,0,0,0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .card-details { font-size: 14px; margin-bottom: 15px; line-height: 1.6; }
+        .card-details span { color: var(--text-color); font-weight: bold; }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 5px;
+            border-radius: 6px;
+            justify-content: center;
+        }
+
+        .qty-btn {
+            background: var(--card-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .qty-btn:hover { background: var(--accent); }
+
+        .delete-btn {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background-color: var(--danger);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .delete-btn:hover { background-color: #c1121f; }
+        
+        .empty-msg { text-align: center; grid-column: 1 / -1; padding: 20px; color: var(--text-color); }
+        
+        @media (max-width: 600px) {
+            .add-form { grid-template-columns: 1fr; }
+            .form-full-width, .btn-submit { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="header-title"><i class="fa-solid fa-mobile-screen-button"></i> متجر رقمي للهواتف</h1>
+        <div class="stats" id="stats-container">إجمالي الشاشات المتوفرة: 0 شاشة</div>
+        
+        <div class="controls-container">
+            <input type="text" id="search-input" class="search-box" placeholder="ابحث عن موديل..." oninput="filterScreens()">
+            <select id="filter-brand" onchange="filterScreens()">
+                <option value="الكل">كل الشركات</option>
+                <option value="Xiaomi">Xiaomi</option>
+                <option value="Tecno">Tecno</option>
+                <option value="Infinix">Infinix</option>
+                <option value="Samsung">Samsung</option>
+                <option value="Apple">Apple</option>
+                <option value="أخرى">أخرى</option>
+            </select>
+            <button class="btn-add-new" onclick="toggleAddForm()">
+                <i class="fa-solid fa-plus"></i> إضافة شاشة
+            </button>
+        </div>
+
+        <!-- نموذج إضافة شاشة جديدة -->
+        <div class="add-form" id="add-form">
+            <select id="new-brand">
+                <option value="Xiaomi">Xiaomi</option>
+                <option value="Tecno">Tecno</option>
+                <option value="Infinix">Infinix</option>
+                <option value="Samsung">Samsung</option>
+                <option value="Apple">Apple</option>
+                <option value="أخرى">أخرى</option>
+            </select>
+            <input type="text" id="new-model" placeholder="موديل الجهاز (مثال: Note 10 Pro)">
+            <select id="new-quality">
+                <option value="أصلي وكالة">أصلي وكالة</option>
+                <option value="درجة أولى (OLED/LCD)">درجة أولى</option>
+                <option value="تجاري">تجاري</option>
+            </select>
+            <input type="number" id="new-qty" placeholder="الكمية" min="1" value="1">
+            <input type="number" id="new-price" class="form-full-width" placeholder="السعر (اختياري)">
+            <button class="btn-submit" onclick="addScreen()"><i class="fa-solid fa-floppy-disk"></i> حفظ في الرصيد</button>
+        </div>
+
+        <!-- شبكة عرض الشاشات -->
+        <div class="screens-grid" id="screens-grid"></div>
+    </div>
+
+    <script>
+        // الذاكرة المحلية (هيكل البيانات أصبح كائنات بدل نصوص بسيطة)
+        let screens = JSON.parse(localStorage.getItem('digitalStoreScreens')) || [];
+
+        function toggleAddForm() {
+            const form = document.getElementById('add-form');
+            form.classList.toggle('active');
+        }
+
+        function addScreen() {
+            const brand = document.getElementById('new-brand').value;
+            const model = document.getElementById('new-model').value.trim();
+            const quality = document.getElementById('new-quality').value;
+            const qty = parseInt(document.getElementById('new-qty').value);
+            const price = document.getElementById('new-price').value.trim();
+
+            if (!model || isNaN(qty) || qty < 1) {
+                alert("يرجى إدخال الموديل والكمية بشكل صحيح!");
+                return;
+            }
+
+            const newScreen = {
+                id: Date.now(), // رقم تعريفي فريد
+                brand: brand,
+                model: model,
+                quality: quality,
+                qty: qty,
+                price: price || "غير محدد"
+            };
+
+            screens.push(newScreen);
+            saveData();
+            
+            // تفريغ الحقول
+            document.getElementById('new-model').value = "";
+            document.getElementById('new-qty').value = "1";
+            document.getElementById('new-price').value = "";
+            
+            toggleAddForm();
+            renderScreens();
+        }
+
+        function updateQty(id, change) {
+            const index = screens.findIndex(s => s.id === id);
+            if (index !== -1) {
+                screens[index].qty += change;
+                if (screens[index].qty < 0) screens[index].qty = 0;
+                saveData();
+                renderScreens();
+            }
+        }
+
+        function deleteScreen(id) {
+            if (confirm("هل أنت متأكد من حذف هذه الشاشة نهائياً؟")) {
+                screens = screens.filter(s => s.id !== id);
+                saveData();
+                renderScreens();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('digitalStoreScreens', JSON.stringify(screens));
+        }
+
+        function renderScreens() {
+            const grid = document.getElementById('screens-grid');
+            const searchText = document.getElementById('search-input').value.toLowerCase();
+            const filterBrand = document.getElementById('filter-brand').value;
+            
+            grid.innerHTML = "";
+            let totalQty = 0;
+
+            const filteredScreens = screens.filter(screen => {
+                const matchText = screen.model.toLowerCase().includes(searchText) || screen.brand.toLowerCase().includes(searchText);
+                const matchBrand = filterBrand === "الكل" || screen.brand === filterBrand;
+                return matchText && matchBrand;
+            });
+
+            if (filteredScreens.length === 0) {
+                grid.innerHTML = "<div class='empty-msg'><i class='fa-solid fa-box-open fa-3x'></i><br><br>لا توجد شاشات مطابقة.</div>";
+            }
+
+            filteredScreens.forEach(screen => {
+                totalQty += screen.qty;
+                
+                // تحديد حالة المخزون لتغيير الألوان
+                let stockClass = "";
+                let stockStatus = "";
+                if (screen.qty === 0) { stockClass = "out-of-stock"; stockStatus = "<span style='color:var(--danger)'>نفذت الكمية!</span>"; }
+                else if (screen.qty <= 2) { stockClass = "low-stock"; stockStatus = "<span style='color:var(--warning)'>الكمية توشك على النفاذ</span>"; }
+                else { stockStatus = "<span style='color:var(--success)'>متوفر</span>"; }
+
+                const card = document.createElement('div');
+                card.className = `screen-card ${stockClass}`;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <strong>${screen.model}</strong>
+                        <span class="brand-badge">${screen.brand}</span>
+                    </div>
+                    <div class="card-details">
+                        الجودة: <span>${screen.quality}</span><br>
+                        السعر: <span>${screen.price}</span><br>
+                        الحالة: ${stockStatus}
+                    </div>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="updateQty(${screen.id}, -1)"><i class="fa-solid fa-minus"></i></button>
+                        <strong style="width: 30px; text-align: center; font-size: 18px;">${screen.qty}</strong>
+                        <button class="qty-btn" onclick="updateQty(${screen.id}, 1)"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <button class="delete-btn" onclick="deleteScreen(${screen.id})" title="حذف الشاشة"><i class="fa-solid fa-trash"></i></button>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('stats-container').innerText = `إجمالي الشاشات المتوفرة في المخزن: ${totalQty} شاشة`;
+        }
+
+        function filterScreens() {
+            renderScreens();
+        }
+
+        // تشغيل العرض عند فتح الصفحة
+        renderScreens();
+    </script>
+</body>
+</html>
